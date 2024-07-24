@@ -1,0 +1,296 @@
+---
+title: "Decision Tree Classifier for Beginners in R"
+output:
+  word_document: default
+  html_document: default
+---
+
+The Decision Tree algorithm is a member of the family of supervised machine learning algorithms. These algorithms typically rely on the concept of ground truth, which involves actual labels indicating, for instance, whether a person has diabetes or not. By comparing the model's predictions with these ground truth labels, metrics can be generated to evaluate the model's performance. Essentially, this underlines that Decision Tree is a supervised learning algorithm.
+
+Decision Trees can be utilized for both classification and regression tasks. In a supervised learning context, the problem can be either classification or regression, and Decision Trees are capable of handling both. The primary objective of the Decision Tree algorithm is to develop a model that predicts the value of a target variable 
+𝑦
+y. The algorithm uses a tree structure to solve the problem, where the leaf nodes represent class labels, and the internal nodes represent attributes.
+
+For a more comprehensive understanding, please refer to the illustration below.
+
+## Task One: Getting Started
+In this task, you will get started by getting an overview
+of the project
+```{r pressure, echo=FALSE, fig.cap="Decision Tree Representation", out.width = '100%'}
+knitr::include_graphics("decision-tree.png")
+
+#Source: Decision Tree Algorithm, Explained
+#https://www.kdnuggets.com/2020/01/decision-tree-algorithm-explained.html
+```
+The Decision Tree algorithm is a powerful tool within the realm of supervised machine learning, known for its ability to handle both classification and regression tasks. A Decision Tree is structured with several key components: the root node, decision nodes (also called internal nodes), and terminal nodes (or leaf nodes).
+
+As depicted in the diagram, the root node represents the initial decision point, from which the dataset is split based on certain criteria. Decision nodes represent further splits within the tree, while terminal nodes indicate the final outcomes or class labels.
+
+The algorithm selects splits based on the principle of creating the most homogeneous partitions, meaning it aims to group similar instances together. This process involves iteratively dividing the dataset into smaller, more homogeneous subsets. Each split is based on one of the input variables, and the goal is to maximize the homogeneity within each resulting partition.
+
+Starting from the root node, the tree grows by evaluating the homogeneity of the outcome within each group and continuing to split as necessary. This process continues until the groups are sufficiently homogeneous or cannot be split further without reducing their similarity.
+
+One of the significant advantages of Decision Trees is their interpretability. They simplify complex decision-making processes by breaking them down into a series of straightforward, smaller decisions, following a divide-and-conquer strategy. The tree structure effectively represents a set of if-else conditions that split the data based on the values of the variables.
+
+Additionally, Decision Trees often perform better than linear regression in non-linear settings due to their ability to capture non-linear relationships between variables. However, a major drawback is the potential for overfitting, especially if the tree grows too large without pruning or cross-validation. Pruning and cross-validation techniques are essential to mitigate overfitting and ensure the model generalizes well to new data.
+
+## Task Two: Import Required Libraries
+In this task, you will learn how to import the 
+required packages for this project
+```{r}
+## 2.1: Import the required packages
+#install.packages("tree")
+#install.packages("caret")
+#install.packages("rpart")
+#install.packages("rpart.plot")
+#install.packages("mlbench")
+#install.packages("e1071")
+library(tree)
+library(caret)
+library(rpart)  
+library(rpart.plot)
+library(mlbench)
+library(e1071)
+
+```
+
+The 'mlbench' package is a collection of benchmark data sets and functions for machine learning in R. We will use a sonar data set in that package. To load the data we will use the data function and put the name of the data set in quotes. First thing to always do is to now what this data really contain. You can use the ?sonar to review the details and understand what is in Sonar data.
+
+Description of Sonar Data
+"This is the data set used by Gorman and Sejnowski in their study of the classification of sonar signals using a neural network [1]. The task is to train a network to discriminate between sonar signals bounced off a metal cylinder and those bounced off a roughly cylindrical rock."
+
+## Task Three: Import and Explore Dataset
+In this task, you will learn how to import and explore the data set
+```{r}
+## 3.1: Load the dataset in R
+data("Sonar")
+```
+
+Let's now proceed the our exploration of data. One thing we can do quickly is to use the View() function to open up a new tab consists of all variables of the data.
+
+```{r}
+## 3.2: View the dataset
+View(Sonar)
+```
+
+As you can see, we have a table consist of 61 variables and 208 values. It says that each pattern is a set of 60 numbers in the range 0.0 to 1.0. Each number represents the energy within a particular frequency. And if you scroll to the last part, you can see the class label. The only, nominal column, namely Class with values M and R. Now let's try to obtain the frequency of the target variable or the Class column for us to be sure that our data set labels are balanced. That is one thing you should always do when you talk about a machine learning task, because if the labels are not balanced, your model that you would train will learn more of the one value, example if the M has 60 counts and 20 for R, the model will learn more of the M than of R. Unless we try to do some of the different tools for balancing the Class.
+
+```{r}
+## 3.3: Obtain the frequency of the target variable
+table(Sonar$Class)
+```
+
+As you can we, we have 111 for M and 97 for R. Which is quite close. Though it is not equal, it is still quite balance unlike if we have let's say 111 and 50. So this is still kind of balanced. So we can actually proceed and build classification model. But before that, let's first check for missing values. We can use this function sum then is.na which says is there any missing value in this Sonar data?
+
+```{r}
+## 3.4: Check for missing values 
+sum(is.na(Sonar))
+```
+
+Ans this shows us that the result is zero, meaning we have no missing values. Alternatively, we can use the anyNA() function to check for missing values.
+
+```{r}
+## OR
+anyNA(Sonar)
+```
+
+And it shows, FALSE, meaning there is no any single missing values in our data set. Let's proceed with our exploration, another thing we want to do is to check the summary of the data, there is this summary() function in R that helps with getting this summary of the data.
+
+```{r}
+## 3.5: Summarise the data set
+summary(Sonar)
+```
+
+This shows us all the five number summary of all the variables 1 to 60 with the mean values. With minimum, 1st quartile, median, 3rd quartile, and maximum. While for categorical variables, it gives us the frequency of the variable.
+
+```{r}
+## Exercise 3.1: Check the number of rows and columns
+nrow(Sonar)
+ncol(Sonar)
+```
+
+We have 208 number of rows and 61 columns. Now the next thing we want to do, is to do a visualization to have an idea of the data and i will randomly select 9 variables only because we have 60 variables, and that is too many. I will set seet to help this project be reproducible. So what ever answer i get now, you'll get that too if you try to reproduce this.
+
+```{r}
+## Set seed to 11
+set.seed(11)
+```
+
+Now what we want to do is to randomly select nine features that we will plot using box plot. To do that, let's create a variable column and sample 9 from 60 variables using the sample() function with two parameters, the x which is the whole data and the size of 9. Then next is we will now create a new variable which contains the 9 column-subset of data. 
+
+```{r}
+## 3.6: Randomly choose nine features from the data set
+columns <- sample(x = 1:60, size = 9)
+columns
+pre_var <- Sonar[, columns]
+pre_var
+```
+
+As you can see, this results in values of the columns we extract from the data. Since we have 9 columns selected that we will visualize we have 9 spaced to put our visuals of the distributions. We will going to use the par() function, this produces a number of plots we want to show. Lastly, is the boxplot of the selected 9 columns. I've written a simple functions that shows the boxplots of each of the 9 columns and plot it in a 3x3.
+
+```{r}
+par(mfrow = c(3,3))   # This produces a 3 by 3 plot of the box plots
+## 3.7: Show box plots of the predictor variables
+for (i in 1:ncol(pre_var)){
+  boxplot(pre_var[, i], xlab = names(pre_var[i]),
+       main = paste("Boxplot of ",names(pre_var[i])),
+       horizontal = TRUE, col = "steelblue")
+}
+```
+We can now see that there are some outliers in some variables, some of the variables are quite normally distributed, while some are quite skewed to the right and some are skewed to the left. And in V12, V49, V56, and V58, we can see that there's an outliers. This gives us an idea of what our variables mean.
+
+## Task Four: Create Train and Test Sets
+In this task, you will learn how to create the train and test data sets
+to build the decision tree model
+
+In machine learning, generally, the common task is to build algorithm that can learn and make predictions from data. Such algorithms function by making data driven predictions or decisions through building a mathematical model from the input data. So the idea of the train and test set is that the train set is a subset of the data used to train the model, while the test set is a subset of the data used to test the trained model. Generally, the training data set are samples used to create the model, while the test or the validation set is used to qualify the performance of the model. Traditionally, the data set used to evaluate the final model's performance is called the test set. Usually, the goal of machine learning is that we want to build a model that can generalize on real life data. Not just something that can learn only and give accuracy just while we are building the model. So we want to split the whole data set into two different data, the train data and the test data. Let's now create a partition of our data. To do that lets create new variable index with createDataPartition() function.
+
+```{r}
+## 4.1: Set Random Seed to 42
+set.seed(42)
+## 4.2: Partition the dataset in the ratio 70:30
+index <- createDataPartition(y=Sonar$Class, p=0.7, list=FALSE)
+```
+
+What it does is it creates a partition of data set which consists of 70 percent of the data and another 30 percent of the data. The arguments in the function includes the y which is the variable class, p which is the percentage of the data that will go to the training set, and list FALSE so it does not return a list. Let's now create a new variable for training and test sets.
+
+```{r}
+## 4.3: Create a training dataset for indexes
+train_set <- Sonar[index,]
+```
+
+Since the index variable has 70 percent of the data, we will inserted it inside the train_set variable, then for the other 30, it will be in the test_set. Just use the negative of the index.
+
+```{r}
+## 4.4: Create a testing dataset for indexes
+test_set <- Sonar[-index,]
+```
+
+To check for the dimension, we will just use the dim() function and use the train and test_set as argument.
+
+```{r}
+## Exercise 4.1: Check the dimensions of the train and test sets
+dim(train_set)
+dim(test_set)
+```
+
+All set, we have 146 rows and 61 columns in train_set, and we have 62 rows and 61 columns for test_set.
+
+## Task Five: Train the Decision Tree Model
+In this task, you will train a decision tree model 
+and visualize the result of the trained model
+
+To build a model let's create a variable name model with tree() function from the tree library, and this takes two parameters, the formula and the data. For the formula, since we want all the variables to be the dependent variable, we will just use a short cut that everyone use which is tilde + dot, which says i want all the other variables to be my independent variables. Then the data that we will use is the train_set. Remember, training set is used for model building. Let's run this.
+```{r}
+## 5.1: Train the model using the tree function
+model <- tree(formula = Class ~ ., 
+              data = train_set)
+```
+
+Since the model is done, let's check the summary of the model using the summary() function. And as you can see, it gives us some little information. It tells us the variable that were used in the model construction. It also tells us the number of terminal nodes, the leaf node or the node where we have the prediction. It also tells us the residual mean deviation and the misclassification error. 
+
+```{r}
+## Exercise 5.1: Check the summary of the model
+summary(model)
+```
+
+Then next thing to do is to visualize the data and see what it looks like. Let's run this together so it will plot the model at the same time, it has its description.
+
+```{r}
+## 5.2: Visualize the decision tree model
+plot(model)
+text(model)
+```
+
+You can see now what the model looks like. V11 is the root node, if V11 is less than 0.15805, then it goes V55, if V11 is greater than that value, it goes to V52. So, you can see how it splits. Let's continue, if V55 is less than 0.00495, the it goes to V25 which continue to split further.
+
+Let's proceed and see this another model using rpart() function
+
+```{r}
+## 5.3: Fit the model using the rpart function
+model1 <- rpart(Class ~ ., data = Sonar,
+           method = "class")
+```
+
+This kind of gives us a better representation of the same model that we have. Let's build the model the same way using the Class variable using all variables as independent variable, the data we will use is the Sonar data, and the method is Class for classification.
+
+```{r}
+## Exercise 5.2: Print the model and the model summary
+model1
+summary(model1)
+```
+
+This decision tree model classifies a dataset of 208 observations into classes M and R, with the root node indicating a near-even split (53.37% M and 46.63% R). The first split is based on variable V11 at a threshold of 0.19795. For observations where V11 is greater than or equal to 0.19795 (121 observations), further splits are made on variables V16 and V34, leading to terminal nodes with varying class probabilities. For example, a terminal node where V34 < 0.69215 classifies 80 instances as M with a high probability (92.50%), while another node where V34 >= 0.69215 classifies 13 instances as R (53.85%). Conversely, for observations where V11 is less than 0.19795 (87 observations), additional splits occur on variables V4 and V45, resulting in terminal nodes with distinct class probabilities. For instance, a terminal node where V4 < 0.0515 classifies 66 instances as R with a high probability (89.39%). Terminal nodes, indicated with an asterisk, represent the final classification decisions.
+
+Let's now visualize the model using the rpart.plot() function. And this gives us a better representation. So let's run it.
+
+```{r}
+## 5.5: Visualize the new decision tree model
+rpart.plot(model1)
+```
+
+Just like what i explained earlier, V11 greater than 0.2, if yes, go to V16, that means about 58% i'm sure its M. If no, it goes to R. Then it keeps splitting that if V4 is greater than  0.052, if yes, then its 10% sure its M, so on.
+
+## Task Six: Evaluating Model Performance
+In this task, you will learn how to evaluate the performance 
+of the decision tree model
+
+First, we want to find the prediction for the first row of the test set. So, I'm going to assess the first row of the test data. That is the data that we have not used in the training. Let's try to make prediction on the first data to try and see how good the model is and see which class this first data falls. We will use the predict() function, and in this predict() function, we'll call the model we will be using. In this case we will use the second one. For the second argument we will use the data of the first row of the test set.
+
+```{r}
+## 6.1: Make prediction for the first row of the test set
+test_set[1, ]
+predict(model1, newdata = test_set[1, ])
+```
+
+So this predicts a 1 for R and 0 for M, that means that the first row of the test data is predicted as R. If you would ask me how R do that, is the predict() function has been built in the back-end to run through the decision tree model and checks that the first row is R. The next thing we want to do is to try to make prediction on all of the data.
+
+```{r}
+## 6.2: Making Predictions on the whole test set
+prediction <- predict(model1, newdata = test_set, type = "class")
+```
+
+We can see our prediction by building a table of predictions. Which is also called the confusion matrix.
+
+```{r}
+## 6.3: Create a table of predictions
+table(x = prediction, y =test_set$Class)
+```
+
+Let me first explain what is in confusion matrix before we interpret the result. The upper part value is the actual value, while the right part is the predicted value. The result is saying that there were 29M's and the model predicted those 29 correctly. That part is called the True Positives. The second column R, first row, is called the False Positives and that means the value actually was R but the model predicted it to be M. So it made three wrong classifications here. Then, in first column second row, our model value is actually M, which is positive but our model predicted it to be R. These are called the False Negatives, it predicted a wrong value, a negative value when actually it was a positive value. The last value which is 26, is saying that our value was R, and the model predicted it correctly to be R. So the values 26 and 29 are the actual positive. The first one is the True positive while the last one is the True negatives. Let's now move on to evaluating the results using confusionmatrix() function to make evaluation.
+
+```{r}
+## 6.4: Evaluate the prediction results
+confusionMatrix(data = prediction,
+                reference = test_set$Class)
+```
+
+The upper part is what i already explained a while ago, so lets just proceed to the next part. However, those upper values were used to calculate this accuracy. It shows 0.8871, so about 88%, our model can make good predictions. Of course that's a good one, but it can also be improved. Next thing to see is the Kappa value of Kappa statistics. It is basically used to control only those instances that may have been correctly classified by chance. So what that means is that the Kappa statistics is frequently used to test reliability of our data. Like are they the correct representations of the variables that we have measured? So, the value 0.6-0.79 like in our case is 0.7737, shows a moderate level of agreement and shows that about 35% to 63% of the data is reliable. And i think that's enough information. We also have the sensitivity value, which is basically the ability of the test to correctly identify the positive class. In our case it is M. And sensitivity is also called the True Positive Rate. That's the probability that an actual positive tested to be positive, which is 87.88. In this case, sensitivity is of more interest to us, because we want to try as much as possible to reduce the False Negatives. That is the 4. Let me do an analogy for us to really understand why we are trying to reduce the False Negatives. For example if somebody has diabetes and the prediction model is predicting that the person does not have diabetes. We want to reduce that to the minimum and sensitivity is of interest here. The other part is what we call the specificity, and it is the ability to correctly identify the negative class. So sensitivity is just like the opposite of the specificity. Specificity is also called the True Negative Rate which is the probability that an actual negative will test negative. Then, another one we have is the Positive Prediction Value. This third value which is also called the Precision indicates the rate at which the positive predictions are correct. While sensitivity identifies the rate at which our observation from the positive class are correctly predicted, the Precision indicates the rate at which the positive predictions are correct. Another thins is to calculate the F1 score. The F1 score is usually used the most because its like a bridge between Specificity and Sensitivity and the Precision.
+
+
+```{r}
+## 6.5: Calculate the F1-Score
+## F1 = 2 * (Recall * Precision) / (Recall + Precision)
+F1 <- 2 * (0.8788 * 0.9062)/(0.8788 + 0.9062)
+F1
+```
+
+Our F1 score is 0.8922897 which is quite okay and very interesting. That's a good value for F1 score. Last thing is to check the prediction error. The misclassification error.
+
+```{r}
+## 6.6: Calculate the prediction error rate
+error_rate <- round(mean(prediction != test_set$Class), 2)
+error_rate
+```
+
+What this is saying is that, look through the prediction, any where the prediction that we had that does not equate to the class from the test data then find the mean. The error is the actual minus the predicted. We want it to find out and round it to two decimal places. This results to 0.11 which is quite low.
+
+Lasly, lets save the model so we could use it somewhere someday. Maybe we want to build a web apps, or you can we can use it in R shiny someday.
+
+```{r}
+## 6.7: Set Working Directory
+getwd()
+
+## 6.8: Save the tree model
+save(model1, file = "DecisionTree.RData")
+```
