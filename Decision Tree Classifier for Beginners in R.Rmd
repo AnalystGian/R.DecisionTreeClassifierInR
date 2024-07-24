@@ -1,8 +1,10 @@
 ---
 title: "Decision Tree Classifier for Beginners in R"
+author: "Gian Carlo Sanfuego"
+date: "2024-07-25"
 output:
-  word_document: default
   html_document: default
+  word_document: default
 ---
 
 The Decision Tree algorithm is a member of the family of supervised machine learning algorithms. These algorithms typically rely on the concept of ground truth, which involves actual labels indicating, for instance, whether a person has diabetes or not. By comparing the model's predictions with these ground truth labels, metrics can be generated to evaluate the model's performance. Essentially, this underlines that Decision Tree is a supervised learning algorithm.
